@@ -1,0 +1,29 @@
+body {
+    background-color: #f8f9fa;
+    font-family: Arial, sans-serif;
+}
+
+h1,
+h2 {
+    color: #343a40;
+}
+
+.btn {
+    padding: 10px 20px;
+    font-size: 1.1rem;
+}
+
+/* Ensure the carousel occupies the full screen */
+.carousel {
+    height: 100vh; /* Full height of the viewport */
+    object-fit: cover; /* Ensure images cover the full screen without stretching */
+}
+
+/* Ensure the images within the carousel cover the entire screen */
+.carousel-inner .carousel-item img {
+    width: 100%;  /* Ensure the image spans the full width */
+    height: 100vh; /* Set the image height to be the full height of the viewport */
+    object-fit: cover; /* Ensure the image covers the screen without distorting */
+}
+
+/* Optional: Ensure the content
