@@ -22,6 +22,28 @@ The Event Management System (EMS) is a web-based platform built using PHP, MySQL
 4. Set up a local server using XAMPP or any LAMP stack.
 5. Access the system via `http://localhost/ems/` in your web browser.
 
+##AJAX and Search Functionality
+--AJAX Functionality
+Dynamic Event Viewing: When the user clicks "View" or a search result, an AJAX request fetches event details and displays them in a modal without reloading the page.
+Admin Privileges: Admin users see extra buttons (Edit, Delete, Download CSV) in the modal.
+Files Involved:
+
+--dashboard.php (JavaScript for AJAX)
+--event/viewevent.php (Fetch event details)
+
+##Search Functionality
+--Real-Time Search: As the user types, matching events are shown below the search box.
+Instant Viewing: Clicking a suggestion shows event details in a modal.
+Files Involved:
+
+--dashboard.php (Search box and AJAX)
+--event/searchevent.php (Search logic)
+
+##Technical Flow:
+
+--Search: User types in the search box, AJAX fetches matching events.
+--View Event: Clicking a result or "View" triggers an AJAX call to show event details.
+
 ## Database Design
 - **users**: Stores user data (ID, name, email, password, role).
 - **events**: Stores event data (ID, name, description, date, time, event type, capacity).
