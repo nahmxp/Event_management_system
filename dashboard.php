@@ -8,24 +8,32 @@ if (!isset($_SESSION['user_id'])) {
     exit();
 }
 
-// Retrieve user session data
 $user_id = $_SESSION['user_id'];
 $user_name = $_SESSION['user_name'];
 $user_role = $_SESSION['user_role'];
 
-// Fetch events from the database
 $events = $conn->query("SELECT * FROM events ORDER BY date DESC");
 ?>
 
 <?php include('header.php'); ?>
 
 <div class="container mt-4">
-    <h2>Welcome, <?= htmlspecialchars($user_name); ?>!</h2>
-    <p>You are logged in as: <strong><?= ucfirst($user_role); ?></strong></p>
+    <h2>Welcome, <?php echo htmlspecialchars($user_name); ?>!</h2>
+    <p>You are logged in as: <strong><?php echo ucfirst($user_role); ?></strong></p>
 
+    <!-- Create Event Button -->
     <a href="event/create.php" class="btn btn-primary mb-3">Create Event</a>
-    <a href="logout.php" class="btn btn-danger mb-3">Logout</a>
 
+    <!-- Search Box with Search Button -->
+    <div class="mb-3 mt-3">
+        <div class="input-group">
+            <input type="text" id="searchBox" class="form-control" placeholder="Search for events...">
+            <button id="searchButton" class="btn btn-primary" type="button">Search</button>
+        </div>
+        <div id="searchResults" class="list-group mt-1"></div>
+    </div>
+
+    <!-- Event List -->
     <h3 class="mt-4">Event List</h3>
     <table class="table table-striped table-hover">
         <thead class="table-dark">
@@ -53,13 +61,10 @@ $events = $conn->query("SELECT * FROM events ORDER BY date DESC");
                         <td><?= htmlspecialchars($event['event_type']); ?></td>
                         <td><?= htmlspecialchars($event['capacity']); ?></td>
                         <td>
-                            <!-- View Button with data-id -->
-                            <button type="button" class="btn btn-sm btn-success view-event-btn" data-id="<?= $event['id'] ?>">View</button>
-
+                            <a href="#" class="btn btn-sm btn-success view-event-btn" data-id="<?= $event['id'] ?>">View</a>
                             <a href="event/edit.php?id=<?= $event['id'] ?>" class="btn btn-sm btn-warning">Edit</a>
                             <a href="event/delete.php?id=<?= $event['id'] ?>" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to delete this event?')">Delete</a>
                             <a href="event/register.php?id=<?= $event['id'] ?>" class="btn btn-sm btn-info">Register</a>
-
                             <?php if ($user_role == 'admin'): ?>
                                 <a href="csv.php?event_id=<?= $event['id'] ?>" class="btn btn-sm btn-dark">Download Report</a>
                             <?php endif; ?>
@@ -90,49 +95,85 @@ $events = $conn->query("SELECT * FROM events ORDER BY date DESC");
     </div>
 </div>
 
-<!-- JavaScript to handle AJAX for viewing event details -->
 <script>
-    document.addEventListener('DOMContentLoaded', () => {
-        // Attach event listener to all View buttons
-        document.querySelectorAll('.view-event-btn').forEach(button => {
-            button.addEventListener('click', function() {
-                const eventId = this.getAttribute('data-id');
+    // Function to load event details into the modal
+    function loadEventDetails(eventId) {
+        fetch(`event/viewevent.php?id=${eventId}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    const event = data.event;
+                    const attendees = data.attendees;
 
-                // Fetch event details using AJAX
-                fetch(`event/viewevent.php?id=${eventId}`)
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.status === 'success') {
-                            const event = data.event;
-                            const attendees = data.attendees;
+                    let attendeesList = attendees.length ? attendees.map(attendee =>
+                        `<li>${attendee.name} (${attendee.email})</li>`
+                    ).join('') : '<li>No attendees registered.</li>';
 
-                            let attendeesList = attendees.length ? attendees.map(attendee =>
-                                `<li>${attendee.name} (${attendee.email})</li>`
-                            ).join('') : '<li>No attendees registered.</li>';
+                    document.getElementById('eventDetails').innerHTML = `
+                        <h4>${event.name}</h4>
+                        <p><strong>Description:</strong> ${event.description}</p>
+                        <p><strong>Date:</strong> ${event.date}</p>
+                        <p><strong>Time:</strong> ${event.event_time}</p>
+                        <p><strong>Event Type:</strong> ${event.event_type}</p>
+                        <p><strong>Capacity:</strong> ${event.capacity}</p>
+                        <h5>Attendees:</h5>
+                        <ul>${attendeesList}</ul>
+                    `;
 
-                            document.getElementById('eventDetails').innerHTML = `
-                            <h4>${event.name}</h4>
-                            <p><strong>Description:</strong> ${event.description}</p>
-                            <p><strong>Date:</strong> ${event.date}</p>
-                            <p><strong>Time:</strong> ${event.event_time}</p>
-                            <p><strong>Capacity:</strong> ${event.capacity}</p>
-                            <p><strong>Event Type:</strong> ${event.event_type}</p>
-                            <h5>Attendees:</h5>
-                            <ul>${attendeesList}</ul>
-                        `;
+                    const eventModal = new bootstrap.Modal(document.getElementById('eventModal'));
+                    eventModal.show();
+                } else {
+                    alert(data.message);
+                }
+            })
+            .catch(error => console.error('Error:', error));
+    }
 
-                            // Show the modal with event details
-                            const eventModal = new bootstrap.Modal(document.getElementById('eventModal'));
-                            eventModal.show();
-                        } else {
-                            alert(data.message);
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                        alert('An error occurred while fetching event details.');
-                    });
-            });
+    // Attach click event for existing view buttons
+    document.querySelectorAll('.view-event-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            loadEventDetails(this.getAttribute('data-id'));
         });
     });
+
+    // Search Function triggered by typing or clicking the search button
+    function performSearch() {
+        const query = document.getElementById('searchBox').value.trim();
+
+        if (query.length > 1) {
+            fetch(`event/searchevent.php?query=${query}`)
+                .then(response => response.json())
+                .then(data => {
+                    const searchResults = document.getElementById('searchResults');
+                    searchResults.innerHTML = '';
+
+                    if (data.length > 0) {
+                        data.forEach(event => {
+                            const item = document.createElement('a');
+                            item.className = 'list-group-item list-group-item-action';
+                            item.innerHTML = `<strong>${event.name}</strong> - ${event.description} <span class="text-muted">(${event.event_type})</span>`;
+                            item.setAttribute('data-id', event.id);
+
+                            item.addEventListener('click', function() {
+                                loadEventDetails(event.id);
+                                searchResults.innerHTML = '';  // Clear suggestions after selection
+                            });
+
+                            searchResults.appendChild(item);
+                        });
+                    } else {
+                        searchResults.innerHTML = '<div class="list-group-item">No matches found.</div>';
+                    }
+                });
+        } else {
+            document.getElementById('searchResults').innerHTML = '';
+        }
+    }
+
+    // Trigger search on typing
+    document.getElementById('searchBox').addEventListener('keyup', performSearch);
+
+    // Trigger search on button click
+    document.getElementById('searchButton').addEventListener('click', performSearch);
 </script>
+
