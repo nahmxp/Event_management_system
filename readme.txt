@@ -27,6 +27,12 @@ The Event Management System (EMS) is a web-based platform built using PHP, MySQL
 - **events**: Stores event data (ID, name, description, date, time, event type, capacity).
 - **attendees**: Stores attendee data (ID, event ID, name, email, phone number, registration date).
 
+## github Link
+- https://github.com/nahmxp/Event_management_system
+
+## Live Link
+- http://revenxr.free.nf/Event_management_system/
+
 ## Accessing the System
 - Admin login: `ahmed.noortaz1@gmail.com` / `adminpassword:123`
 - Regular user login: `ahmed.noor@gmail.com` / `userpassword:1234`
